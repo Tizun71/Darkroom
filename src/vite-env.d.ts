@@ -9,7 +9,7 @@ declare module "virtual:gallery" {
     model: string;
     date: string;
     /** Contributor, from an X or GitHub profile link or a GitHub username */
-    author: { name: string; url: string; avatar: string | null; platform: "x" | "github" | "web" } | null;
+    author: import("../plugins/content.ts").Author | null;
     tags: string[];
     src: string;
     width: number | null;

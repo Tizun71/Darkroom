@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { GithubLogoIcon } from "@phosphor-icons/react";
-import CopyButton from "./CopyButton";
+import Brand from "../components/Brand";
+import CopyButton from "../components/CopyButton";
 import { REPO_URL } from "../config";
 
 const TEMPLATE = `---
@@ -66,8 +67,7 @@ export default function Contribute() {
     <main className="mx-auto grid max-w-3xl gap-12 px-4 py-12 sm:py-16">
       <div className="flex items-center justify-between gap-4">
         <a href="./" className="flex items-center gap-2 text-base font-semibold">
-          <img src="./logo-mark.png" alt="" aria-hidden="true" className="size-6 rounded-md" />
-          Darkroom
+          <Brand />
         </a>
         <a href="./" className="inline-flex h-11 items-center rounded-lg px-3 text-sm font-semibold text-fg-dim transition-colors duration-150 hover:bg-surface-2 hover:text-fg">
           Back to the gallery

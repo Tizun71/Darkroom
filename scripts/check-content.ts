@@ -3,7 +3,7 @@
 // Exits with code 1 and a list of problems when something needs fixing.
 import fs from "node:fs";
 import path from "node:path";
-import { IMAGE_EXT, PROMPT_FILE, list, parseAuthor, readContent } from "../plugins/gallery.ts";
+import { IMAGE_EXT, PROMPT_FILE, list, parseAuthor, readContent } from "../plugins/content.ts";
 
 const dir = path.resolve(import.meta.dirname, "..", "content");
 const MAX_BYTES = 400 * 1024;

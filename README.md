@@ -16,7 +16,7 @@ npm run check     # kiểm tra content/ (CI chạy lệnh này trên mọi PR)
 
 Xem trang `/contribute.html` hoặc `CONTRIBUTING.md`. Tóm tắt: người đóng góp gửi pull request thêm 1 thư mục `content/<tên>/` (ảnh + `prompt.md`), GitHub Action (`.github/workflows/check.yml`) chạy `npm run check` và `npm run build`, bạn review rồi merge. Ai không quen PR thì dùng issue form "Submit a prompt".
 
-Nhớ điền `REPO_URL` trong `src/config.ts` để các link tới repo (upload, fork, issue) hiện ra.
+Link tới repo (upload, fork, issue) lấy từ `REPO_URL` trong `src/config.ts`. Fork sang repo khác thì sửa giá trị này.
 
 ## Thêm ảnh mới
 
@@ -88,18 +88,18 @@ Trang chỉ có một việc: xem ảnh, bấm Copy. Header một dòng, thanh t
 | Đường dẫn | Vai trò |
 |---|---|
 | `content/` | Mỗi tác phẩm một thư mục: `image.*` + `prompt.md`. Thường chỉ cần sửa ở đây. |
-| `plugins/gallery.ts` | Plugin Vite đọc `content/` lúc build, lấy kích thước ảnh, tạo module `virtual:gallery`, chọn ảnh local hay CDN. |
+| `plugins/content.ts` | Đọc `content/`: parse frontmatter, `author:`, kích thước ảnh. Dùng chung cho plugin và scripts. |
+| `plugins/gallery.ts` | Plugin Vite tạo module `virtual:gallery`, chọn ảnh local hay CDN. |
 | `scripts/add-entry.ts` | `npm run add`: nén ảnh, tạo thư mục và `prompt.md` mẫu. |
-| `src/config.ts` | Điền `REPO_URL` để hiện link GitHub ở header và trang contribute. |
-| `src/components/Contribute.tsx` | Trang hướng dẫn đóng góp. |
-| `scripts/check-content.ts` | Kiểm tra tên thư mục, trường bắt buộc, kích thước ảnh. |
-| `.github/` | CI, PR template, issue form. |
-| `src/App.tsx` | Header, tìm kiếm, lọc tag, footer, link chia sẻ `#/<id>`. |
-| `src/components/Wall.tsx` | Lưới masonry, mỗi ô hiện model và người đóng góp. |
-| `src/components/Lightbox.tsx` | Xem chi tiết: prompt, nút Copy, negative prompt, link chia sẻ. |
-| `src/components/CopyButton.tsx` | Nút copy (dựa trên 21st.dev Copy Button), có fallback. |
-| `src/page.tsx` | Trang Privacy, Terms, 404. |
+| `scripts/check-content.ts` | `npm run check`: kiểm tra tên thư mục, trường bắt buộc, kích thước ảnh. |
+| `src/main.tsx`, `src/App.tsx` | Trang gallery: ghép header, thanh lọc, lưới ảnh, lightbox. |
+| `src/page.tsx` | Entry cho các trang tĩnh. Mỗi file HTML chọn trang bằng `<body data-page="...">`. |
+| `src/pages/` | `Contribute`, `Legal` (Privacy, Terms), `NotFound`. |
+| `src/hooks/` | `useGalleryFilter` (tìm kiếm, lọc tag), `useShareLink` (link chia sẻ `#/<id>`). |
+| `src/components/` | `Wall` (lưới masonry), `Lightbox` (chi tiết, nút Copy), `FilterBar`, `SiteHeader`, `SiteFooter`, `EmptyState`, `CopyButton`, `Author`... |
+| `src/config.ts` | `REPO_URL`: link GitHub ở header và trang contribute. |
 | `src/index.css` | Màu và font (Tailwind v4 `@theme`). |
+| `.github/` | CI, Dependabot, PR template, issue form. |
 
 ## License
 
