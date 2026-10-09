@@ -14,7 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
-import { IMAGE_EXT, PROMPT_FILE } from "../plugins/gallery.ts";
+import { IMAGE_EXT, PROMPT_FILE } from "../plugins/content.ts";
 
 const MAX_EDGE = 1440;
 const args = process.argv.slice(2);
