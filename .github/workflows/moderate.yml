@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      models: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +25,8 @@ jobs:
       - run: npm ci
       - name: AI moderation
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MODERATION_MODEL: ${{ vars.MODERATION_MODEL }}
           SLUGS: ${{ inputs.slugs }}
           MODERATION_OUT: ${{ runner.temp }}/moderation.json
         run: node scripts/moderate.ts $SLUGS

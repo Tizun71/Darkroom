@@ -1,8 +1,8 @@
 name: Intake submitted prompt
 
 # Turns a "Submit a prompt" issue into a ready-to-merge pull request:
-# build the entry, validate it, ask the free GitHub Models AI to moderate it,
-# then open a PR labelled `ai-approved`. A maintainer only clicks Merge.
+# build the entry, validate it, ask the free Gemini API (GEMINI_API_KEY secret) to moderate it,
+# then open a PR labelled `ai-approved` (or `needs-human` when no AI key is set). A maintainer only clicks Merge.
 # The required `check` runs through workflow_dispatch, because events from
 # GITHUB_TOKEN do not start pull_request workflows.
 
@@ -28,10 +28,10 @@ jobs:
       pull-requests: write
       issues: write
       actions: write
-      models: read
     env:
       GH_TOKEN: ${{ github.token }}
-      GITHUB_TOKEN: ${{ github.token }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      MODERATION_MODEL: ${{ vars.MODERATION_MODEL }}
       ISSUE: ${{ github.event.issue.number }}
       LOGIN: ${{ github.event.issue.user.login }}
       USER_ID: ${{ github.event.issue.user.id }}
@@ -63,7 +63,11 @@ jobs:
         run: |
           branch="intake/issue-$ISSUE"
           title=$(jq -r .title "$INTAKE_OUT")
-          reason=$(jq -r '.verdicts[0].reason' "$MODERATION_OUT")
+          if [ "$(jq -r .skipped "$MODERATION_OUT")" = "true" ]; then
+            label=needs-human; reason="skipped (no GEMINI_API_KEY), a maintainer reviews the image."
+          else
+            label=ai-approved; reason=$(jq -r '.verdicts[0].reason' "$MODERATION_OUT")
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
@@ -78,11 +82,11 @@ jobs:
           Merge when \`check\` passes."
           url=$(gh pr view "$branch" --json url -q .url 2>/dev/null || true)
           if [ -z "$url" ]; then
-            url=$(gh pr create --head "$branch" --title "Add $title" --body "$body" --label ai-approved)
+            url=$(gh pr create --head "$branch" --title "Add $title" --body "$body" --label "$label")
           fi
           gh workflow run check.yml --ref "$branch"
 
-          gh issue edit "$ISSUE" --remove-label needs-changes --remove-label ai-retry --add-label ai-approved || true
+          gh issue edit "$ISSUE" --remove-label needs-changes --remove-label ai-retry --add-label "$label" || true
           gh issue comment "$ISSUE" --body "Thanks! Your image passed the automatic checks: $url
 
           It appears in the gallery a few minutes after a maintainer merges the pull request. This issue closes by itself."

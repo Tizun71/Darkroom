@@ -2,17 +2,20 @@
 //
 //   node scripts/moderate.ts <slug> [slug...]
 //
-// Uses GitHub Models (free tier), authenticated with GITHUB_TOKEN. The workflow needs
-// `permissions: models: read`. Writes the verdicts to moderation.json and the job summary.
+// Uses the Gemini API free tier through its OpenAI-compatible endpoint. Needs the
+// GEMINI_API_KEY secret (free key from https://aistudio.google.com/apikey). Without a
+// key the check is skipped: moderation.json gets `"skipped": true` and the exit code is 0,
+// so the workflows fall back to a human review. Writes the verdicts to moderation.json
+// and the job summary.
 //
-// Exit codes: 0 all approved, 1 at least one rejected, 2 the model could not be reached.
+// Exit codes: 0 all approved (or skipped), 1 at least one rejected, 2 the model could not be reached.
 import fs from "node:fs";
 import path from "node:path";
 import { PROMPT_FILE, parse, readContent } from "../plugins/content.ts";
 import { previewDataUrl } from "./lib/image.ts";
 
-const ENDPOINT = "https://models.github.ai/inference/chat/completions";
-const MODEL = process.env.MODERATION_MODEL || "openai/gpt-4.1-mini";
+const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODEL = process.env.MODERATION_MODEL || "gemini-flash-lite-latest";
 const OUT = path.resolve(process.env.MODERATION_OUT || "moderation.json");
 const contentDir = path.resolve(import.meta.dirname, "..", "content");
 
@@ -45,10 +48,8 @@ async function ask(slug: string): Promise<Verdict> {
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-          Accept: "application/vnd.github+json",
-          "Content-Type": "application/json",
-          "X-GitHub-Api-Version": "2022-11-28"
+          Authorization: `Bearer ${process.env.GEMINI_API_KEY}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           model: MODEL,
@@ -85,9 +86,10 @@ if (!slugs.length) {
   console.error("Usage: node scripts/moderate.ts <slug> [slug...]");
   process.exit(1);
 }
-if (!process.env.GITHUB_TOKEN) {
-  console.error("GITHUB_TOKEN is not set.");
-  process.exit(2);
+if (!process.env.GEMINI_API_KEY) {
+  console.warn("GEMINI_API_KEY is not set: AI moderation skipped, a maintainer reviews instead.");
+  fs.writeFileSync(OUT, JSON.stringify({ model: null, skipped: true, verdicts: [], error: null }, null, 2));
+  process.exit(0);
 }
 
 const verdicts: Verdict[] = [];
@@ -104,7 +106,7 @@ for (const slug of slugs) {
   }
 }
 
-fs.writeFileSync(OUT, JSON.stringify({ model: MODEL, verdicts, error: unreachable || null }, null, 2));
+fs.writeFileSync(OUT, JSON.stringify({ model: MODEL, skipped: false, verdicts, error: unreachable || null }, null, 2));
 if (process.env.GITHUB_STEP_SUMMARY) {
   const rows = verdicts.map((v) => `| \`${v.slug}\` | ${v.approve ? "approved" : "rejected"} | ${v.reason.replace(/\|/g, "\\|")} |`);
   const summary = [`### AI moderation (${MODEL})`, "", "| Entry | Verdict | Reason |", "|---|---|---|", ...rows, unreachable ? `\nModel unreachable: ${unreachable}` : ""];
