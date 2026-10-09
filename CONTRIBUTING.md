@@ -51,6 +51,10 @@ Everything below the second `---` is the prompt. Paste it exactly as you used it
 - You generated it yourself
 - No real people's likeness, no explicit content, no logos or trademarked characters
 
+## License
+
+By opening a pull request or a submission issue, you confirm that you have the right to share the image and prompt, and you agree to publish them under [CC BY 4.0](content/LICENSE). You keep the copyright. Anyone who reuses your work must credit you. Code contributions are under the [MIT License](LICENSE).
+
 ## Option A: upload on github.com (no install)
 
 1. Open the `content` folder in this repository.

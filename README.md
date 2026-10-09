@@ -100,4 +100,8 @@ Trang chỉ có một việc: xem ảnh, bấm Copy. Header một dòng, thanh t
 | `src/components/CopyButton.tsx` | Nút copy (dựa trên 21st.dev Copy Button), có fallback. |
 | `src/page.tsx` | Trang Privacy, Terms, 404. |
 | `src/index.css` | Màu và font (Tailwind v4 `@theme`). |
-"# Darkroom" 
+
+## License
+
+- Code: [MIT](LICENSE).
+- Ảnh và prompt trong `content/`: [CC BY 4.0](content/LICENSE). Bản quyền thuộc người đóng góp ghi trong `author:`. Dùng lại phải ghi nguồn.

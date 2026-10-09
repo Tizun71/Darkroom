@@ -50,7 +50,7 @@ const used = new Set(entries.map((e) => e.imageFile).filter(Boolean));
 for (const f of files) {
   const ext = path.extname(f).toLowerCase();
   if (!f.includes("/")) {
-    if (f.toLowerCase() === "readme.md") continue;
+    if (f.toLowerCase() === "readme.md" || f === "LICENSE") continue;
     errors.push(`content/${f}: put each entry in its own folder: content/<name>/${PROMPT_FILE} and content/<name>/image${ext || ".jpg"}. Tip: npm run add -- <image> <name>`);
   } else if (IMAGE_EXT.includes(ext)) {
     if (!used.has(f)) errors.push(`content/${f}: extra image. Each folder holds one image, named image${ext}.`);
