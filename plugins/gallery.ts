@@ -6,9 +6,14 @@ import type { Plugin, ViteDevServer } from "vite";
 /**
  * Turns the /content folder into a virtual module, `virtual:gallery`.
  *
- * Every `name.md` becomes one entry. Its image is `name.jpg|png|webp|avif|gif`
- * next to it, or whatever the `image:` field points to (a file in /content or
- * an https URL). Image sizes are read at build time so the grid never jumps.
+ * Every entry is one folder, `content/<slug>/`, holding `prompt.md` and its
+ * image `image.jpg|png|webp|avif|gif` (or whatever the `image:` field points
+ * to: a file in that folder or an https URL). Image sizes are read at build
+ * time so the grid never jumps.
+ *
+ * When built on Vercel from a Git commit, images are not bundled. They are
+ * served from GitHub through jsDelivr, pinned to the commit SHA. See
+ * `imageCdnBase()`.
  *
  * `readContent` is shared with `scripts/check-content.ts`, which validates
  * contributions in CI.
@@ -22,10 +27,11 @@ type Meta = Record<string, string>;
 
 export type ContentEntry = {
   id: string;
+  /** Path of prompt.md relative to /content, e.g. `harbor-at-dawn/prompt.md` */
   file: string;
   meta: Meta;
   prompt: string;
-  /** File name inside /content, or null when the image is a URL */
+  /** Path relative to /content, e.g. `harbor-at-dawn/image.avif`, or null when the image is a URL */
   imageFile: string | null;
   imageUrl: string | null;
   bytes: number | null;
@@ -90,17 +96,34 @@ export function parseAuthor(value = ""): Author | null {
   return { name: host, url: url.href, avatar: null, platform: "web" };
 }
 
-/** Reads every entry in the content folder. Entries that cannot be shown are reported in `problems`. */
+export const PROMPT_FILE = "prompt.md";
+
+/**
+ * Reads every entry in the content folder. Entries that cannot be shown are reported in `problems`.
+ * `files` lists every file as a path relative to /content, with forward slashes.
+ */
 export function readContent(dir: string): { entries: ContentEntry[]; problems: string[]; files: string[] } {
   const entries: ContentEntry[] = [];
   const problems: string[] = [];
-  if (!fs.existsSync(dir)) return { entries, problems, files: [] };
-  const files = fs.readdirSync(dir);
+  const files: string[] = [];
+  if (!fs.existsSync(dir)) return { entries, problems, files };
 
-  for (const file of files) {
-    if (!file.toLowerCase().endsWith(".md") || file.toLowerCase() === "readme.md") continue;
-    const id = path.basename(file, ".md");
-    const { meta, body } = parse(fs.readFileSync(path.join(dir, file), "utf8"));
+  for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!item.isDirectory()) {
+      files.push(item.name);
+      continue;
+    }
+    const id = item.name;
+    const folder = path.join(dir, id);
+    const inFolder = fs.readdirSync(folder);
+    inFolder.forEach((f) => files.push(`${id}/${f}`));
+
+    const file = `${id}/${PROMPT_FILE}`;
+    if (!inFolder.includes(PROMPT_FILE)) {
+      problems.push(`content/${id}/: no ${PROMPT_FILE} in this folder.`);
+      continue;
+    }
+    const { meta, body } = parse(fs.readFileSync(path.join(folder, PROMPT_FILE), "utf8"));
     if (!body) {
       problems.push(`content/${file}: no prompt text below the --- block.`);
       continue;
@@ -111,20 +134,20 @@ export function readContent(dir: string): { entries: ContentEntry[]; problems: s
     if (meta.image && /^https?:\/\//.test(meta.image)) {
       entry.imageUrl = meta.image;
     } else {
-      const imgFile = meta.image || files.find((f) => IMAGE_EXT.some((ext) => f.toLowerCase() === id.toLowerCase() + ext));
-      if (!imgFile || !fs.existsSync(path.join(dir, imgFile))) {
-        problems.push(`content/${file}: no image found. Add ${id}.jpg (or .png, .webp) next to it.`);
+      const imgFile = meta.image || inFolder.find((f) => IMAGE_EXT.some((ext) => f.toLowerCase() === "image" + ext));
+      if (!imgFile || !fs.existsSync(path.join(folder, imgFile))) {
+        problems.push(`content/${id}/: no image found. Add image.jpg (or .png, .webp, .avif) to this folder.`);
         continue;
       }
-      entry.imageFile = imgFile;
-      const buf = fs.readFileSync(path.join(dir, imgFile));
+      entry.imageFile = `${id}/${imgFile}`;
+      const buf = fs.readFileSync(path.join(folder, imgFile));
       entry.bytes = buf.length;
       try {
         const size = imageSize(buf);
         entry.width = size.width ?? null;
         entry.height = size.height ?? null;
       } catch {
-        problems.push(`content/${imgFile}: could not read the image. Is the file corrupted?`);
+        problems.push(`content/${entry.imageFile}: could not read the image. Is the file corrupted?`);
       }
     }
     entries.push(entry);
@@ -132,13 +155,31 @@ export function readContent(dir: string): { entries: ContentEntry[]; problems: s
   return { entries, problems, files };
 }
 
+/**
+ * Base URL that serves the repository root, or null to bundle images with the site.
+ *
+ * - `IMAGE_CDN=off` always bundles.
+ * - `IMAGE_CDN_BASE` sets it by hand, e.g. `https://cdn.jsdelivr.net/gh/you/repo@main`.
+ * - On Vercel Git deploys, uses jsDelivr pinned to the deployed commit, so URLs never go stale.
+ */
+export function imageCdnBase(env: NodeJS.ProcessEnv = process.env): string | null {
+  if (env.IMAGE_CDN === "off") return null;
+  if (env.IMAGE_CDN_BASE) return env.IMAGE_CDN_BASE.replace(/\/+$/, "");
+  const { VERCEL_GIT_REPO_OWNER: owner, VERCEL_GIT_REPO_SLUG: repo, VERCEL_GIT_COMMIT_SHA: sha, VERCEL_GIT_PROVIDER: provider } = env;
+  if (owner && repo && sha && (!provider || provider === "github")) return `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${sha}`;
+  return null;
+}
+
 function generate(dir: string, warn: (msg: string) => void): string {
   const { entries, problems } = readContent(dir);
   problems.forEach(warn);
+  const cdn = imageCdnBase();
   const imports: string[] = [];
   const items = entries.map((e, i) => {
     let src = JSON.stringify(e.imageUrl);
-    if (e.imageFile) {
+    if (e.imageFile && cdn) {
+      src = JSON.stringify(`${cdn}/content/${e.imageFile.split("/").map(encodeURIComponent).join("/")}`);
+    } else if (e.imageFile) {
       imports.push(`import img${i} from ${JSON.stringify("/content/" + e.imageFile)};`);
       src = `img${i}`;
     }

@@ -3,7 +3,7 @@
 // Exits with code 1 and a list of problems when something needs fixing.
 import fs from "node:fs";
 import path from "node:path";
-import { IMAGE_EXT, list, parseAuthor, readContent } from "../plugins/gallery.ts";
+import { IMAGE_EXT, PROMPT_FILE, list, parseAuthor, readContent } from "../plugins/gallery.ts";
 
 const dir = path.resolve(import.meta.dirname, "..", "content");
 const MAX_BYTES = 1.5 * 1024 * 1024;
@@ -19,7 +19,7 @@ const warnings: string[] = [];
 
 for (const e of entries) {
   const where = `content/${e.file}`;
-  if (!SLUG.test(e.id)) errors.push(`${where}: file name must be lowercase words joined by hyphens, like "harbor-at-dawn.md".`);
+  if (!SLUG.test(e.id)) errors.push(`content/${e.id}/: folder name must be lowercase words joined by hyphens, like "harbor-at-dawn".`);
   if (!e.meta.title) errors.push(`${where}: add a "title:" line.`);
   if (!e.meta.model) errors.push(`${where}: add a "model:" line, for example "model: Midjourney v7".`);
   if (!e.meta.date || !DATE.test(e.meta.date) || Number.isNaN(Date.parse(e.meta.date))) {
@@ -33,9 +33,9 @@ for (const e of entries) {
   if (e.imageUrl) errors.push(`${where}: upload the image file instead of linking to a URL, so it cannot disappear later.`);
   if (e.imageFile) {
     if (e.bytes !== null && e.bytes > MAX_BYTES) {
-      errors.push(`content/${e.imageFile}: ${(e.bytes / 1024 / 1024).toFixed(1)} MB is too large. Run: npm run compress -- content/${e.imageFile}`);
+      errors.push(`content/${e.imageFile}: ${(e.bytes / 1024 / 1024).toFixed(1)} MB is too large. Run: npm run add -- content/${e.imageFile} ${e.id}`);
     } else if (e.bytes !== null && e.bytes > SOFT_BYTES) {
-      warnings.push(`content/${e.imageFile}: ${Math.round(e.bytes / 1024)} KB. Smaller loads faster: npm run compress -- content/${e.imageFile}`);
+      warnings.push(`content/${e.imageFile}: ${Math.round(e.bytes / 1024)} KB. Smaller loads faster: npm run add -- content/${e.imageFile} ${e.id}`);
     }
     if (e.width && e.height) {
       const long = Math.max(e.width, e.height);
@@ -45,17 +45,17 @@ for (const e of entries) {
   }
 }
 
-// Images that no prompt file points to
+// Every file must live in an entry folder, and every image must belong to its prompt
 const used = new Set(entries.map((e) => e.imageFile).filter(Boolean));
 for (const f of files) {
-  if (IMAGE_EXT.includes(path.extname(f).toLowerCase()) && !used.has(f)) {
-    errors.push(`content/${f}: this image has no matching .md file. Add ${path.basename(f, path.extname(f))}.md with its prompt.`);
-  }
-}
-for (const f of files) {
   const ext = path.extname(f).toLowerCase();
-  if (ext !== ".md" && !IMAGE_EXT.includes(ext) && fs.statSync(path.join(dir, f)).isFile()) {
-    errors.push(`content/${f}: unexpected file type. Only images and .md files belong in content.`);
+  if (!f.includes("/")) {
+    if (f.toLowerCase() === "readme.md") continue;
+    errors.push(`content/${f}: put each entry in its own folder: content/<name>/${PROMPT_FILE} and content/<name>/image${ext || ".jpg"}. Tip: npm run add -- <image> <name>`);
+  } else if (IMAGE_EXT.includes(ext)) {
+    if (!used.has(f)) errors.push(`content/${f}: extra image. Each folder holds one image, named image${ext}.`);
+  } else if (path.basename(f) !== PROMPT_FILE && fs.statSync(path.join(dir, f)).isFile()) {
+    errors.push(`content/${f}: unexpected file. Each folder holds only ${PROMPT_FILE} and one image.`);
   }
 }
 

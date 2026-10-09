@@ -1,14 +1,23 @@
 # Contributing a prompt
 
-Anyone can add an image and its prompt. Each image is two files in the `content/` folder:
+Anyone can add an image and its prompt. Each image is one folder in `content/` holding two files:
 
 ```
 content/
-  harbor-at-dawn.jpg   the image
-  harbor-at-dawn.md    the prompt
+  harbor-at-dawn/
+    image.jpg    the image
+    prompt.md    the prompt
 ```
 
-Both files must have the same name: lowercase words joined by hyphens.
+Name the folder with lowercase words joined by hyphens. The folder name is the share link: `/#/harbor-at-dawn`.
+
+The fastest way, with the repository cloned:
+
+```bash
+npm run add -- ~/Downloads/poster.png harbor-at-dawn
+```
+
+This shrinks the image to `content/harbor-at-dawn/image.avif` and creates `prompt.md` from a template. Fill in the fields and paste your prompt.
 
 ## The prompt file
 
@@ -37,7 +46,7 @@ Everything below the second `---` is the prompt. Paste it exactly as you used it
 
 ## Image rules
 
-- `.jpg`, `.png`, `.webp` or `.avif`, under 1.5 MB. `npm run compress -- <image> <name>` resizes it and saves it to `content/`
+- Named `image.jpg`, `image.png`, `image.webp` or `image.avif`, under 1.5 MB. `npm run add -- <image> <name>` resizes it and saves it to `content/<name>/`
 - Long edge between 512 and 2560 px
 - You generated it yourself
 - No real people's likeness, no explicit content, no logos or trademarked characters
@@ -46,11 +55,11 @@ Everything below the second `---` is the prompt. Paste it exactly as you used it
 
 1. Open the `content` folder in this repository.
 2. Click **Add file**, then **Upload files**.
-3. Drag in your image and your `.md` file.
+3. Drag in your whole folder (for example `harbor-at-dawn/`) with `image.jpg` and `prompt.md` inside.
 4. Choose **Create a new branch** and click **Propose changes**. GitHub forks the repository for you.
 5. Click **Create pull request**.
 
-To write the `.md` file in the browser instead, use **Add file**, then **Create new file**, and name it `harbor-at-dawn.md`.
+To write the prompt in the browser instead, use **Add file**, then **Create new file**, and name it `harbor-at-dawn/prompt.md`. Typing the `/` creates the folder. Then upload `image.jpg` into that folder.
 
 ## Option B: with git
 
@@ -59,7 +68,8 @@ git clone https://github.com/<you>/<your-fork>.git
 cd <your-fork>
 npm install
 npm run dev          # preview at http://localhost:5173
-# add your two files to content/
+npm run add -- ~/Downloads/poster.png harbor-at-dawn
+# fill in content/harbor-at-dawn/prompt.md
 npm run check        # validates names, fields and image size
 git checkout -b add-harbor-at-dawn
 git add content

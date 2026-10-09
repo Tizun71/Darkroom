@@ -17,7 +17,8 @@ const GIT_STEPS = `git clone https://github.com/<you>/<your-fork>.git
 cd <your-fork>
 npm install
 npm run dev
-# add your two files to content/
+npm run add -- ~/Downloads/poster.png harbor-at-dawn
+# fill in content/harbor-at-dawn/prompt.md
 npm run check
 git checkout -b add-harbor-at-dawn
 git add content
@@ -76,22 +77,22 @@ export default function Contribute() {
       <header className="grid gap-4">
         <h1 className="text-4xl font-semibold tracking-tight">Add your prompt</h1>
         <p className="text-lg text-fg-dim">
-          Anyone with a free GitHub account can add an image. You send a pull request with two files, an automatic check validates them,
+          Anyone with a free GitHub account can add an image. You send a pull request with one folder holding two files, an automatic check validates them,
           and after a maintainer merges it your image shows up at the top of the gallery.
         </p>
       </header>
 
-      <Step n={1} title="Prepare two files with the same name">
+      <Step n={1} title="Prepare one folder with two files">
         <p className="text-base text-fg-dim">
-          The image and a small text file with its prompt. Use lowercase words joined by hyphens, for example{" "}
-          <code className="text-fg">harbor-at-dawn.jpg</code> and <code className="text-fg">harbor-at-dawn.md</code>.
+          Name the folder with lowercase words joined by hyphens, for example <code className="text-fg">harbor-at-dawn</code>. Inside it
+          put the image as <code className="text-fg">image.jpg</code> and its prompt as <code className="text-fg">prompt.md</code>.
         </p>
-        <Code label="harbor-at-dawn.md" text={TEMPLATE} />
+        <Code label="harbor-at-dawn/prompt.md" text={TEMPLATE} />
         <ul className="grid gap-2 text-base text-fg-dim">
           <li><strong className="font-semibold text-fg">Required:</strong> title, model, date (YYYY-MM-DD), tags, and the prompt below the second <code className="text-fg">---</code>.</li>
           <li><strong className="font-semibold text-fg">Optional:</strong> negative prompt, and author for credit: your X profile link, your GitHub profile link, or your GitHub username. Your avatar shows next to the image.</li>
           <li><strong className="font-semibold text-fg">Prompt:</strong> paste it exactly as you used it, flags like <code className="text-fg">--ar 4:5</code> included.</li>
-          <li><strong className="font-semibold text-fg">Image:</strong> .jpg, .png, .webp or .avif, under 1.5 MB, long edge between 512 and 2560 px. <code className="text-fg">npm run compress</code> shrinks it for you.</li>
+          <li><strong className="font-semibold text-fg">Image:</strong> .jpg, .png, .webp or .avif, under 1.5 MB, long edge between 512 and 2560 px. <code className="text-fg">npm run add</code> shrinks it and creates the folder for you.</li>
         </ul>
       </Step>
 
@@ -103,7 +104,7 @@ export default function Contribute() {
             <li>
               Click <strong className="font-semibold text-fg">Add file</strong>, then <RepoLink path="/upload/main/content">Upload files</RepoLink>.
             </li>
-            <li>Drag in the image and the .md file.</li>
+            <li>Drag in your whole folder (for example <code className="text-fg">harbor-at-dawn</code>) with the image and prompt.md inside.</li>
             <li>
               Choose <strong className="font-semibold text-fg">Create a new branch</strong> and click{" "}
               <strong className="font-semibold text-fg">Propose changes</strong>. GitHub forks the repository for you.
