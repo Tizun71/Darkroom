@@ -99,7 +99,7 @@ Trang chỉ có một việc: xem ảnh, bấm Copy. Header một dòng, thanh t
 | `src/components/` | `Wall` (lưới masonry), `Lightbox` (chi tiết, nút Copy), `FilterBar`, `SiteHeader`, `SiteFooter`, `EmptyState`, `CopyButton`, `Author`... |
 | `src/config.ts` | `REPO_URL`: link GitHub ở header và trang contribute. |
 | `src/index.css` | Màu và font (Tailwind v4 `@theme`). |
-| `.github/` | CI, Dependabot, PR template, issue form. |
+| `.github/` | CI, PR template, issue form. |
 
 ## License
 
