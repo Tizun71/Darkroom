@@ -53,6 +53,7 @@ Fishing boats in a quiet harbor at dawn, mist on the water, ...
 - Phần dưới dấu `---` là prompt. Nút copy sẽ copy đúng phần này.
 - `title`, `model`, `date`, `tags` bắt buộc (`npm run check` báo lỗi nếu thiếu). `negative`, `author` không bắt buộc. Tác phẩm có `date` mới nhất hiện đầu trang.
 - Ảnh phải là file trong thư mục của tác phẩm. `npm run check` từ chối `image: https://...` để ảnh không mất về sau.
+- Giới hạn: ảnh ≤ 400 KB, cạnh dài 512–2048 px (`npm run check` chặn). `npm run add` ra AVIF 1440px q45, thường 70–120 KB.
 - Ảnh quá lớn: `npm run add -- <ảnh> <tên>` thu nhỏ và lưu thành `content/<tên>/image.avif` (`npm run compress` là alias).
 - Tên thư mục (`harbor-dawn`) được dùng làm link chia sẻ: `/#/harbor-dawn`.
 - `author:` nhận link X (`https://x.com/ten`), link GitHub hoặc username GitHub. Link X lấy avatar từ `https://unavatar.io/x/ten`, GitHub lấy từ `https://unavatar.io/github/ten`.
@@ -72,6 +73,13 @@ https://cdn.jsdelivr.net/gh/<owner>/<repo>@<commit-sha>/content/<tên>/image.avi
 - `IMAGE_CDN=off`: tắt, đóng gói ảnh như bình thường (dùng khi `vercel deploy` từ máy với commit chưa push).
 - `IMAGE_CDN_BASE=https://cdn.jsdelivr.net/gh/Tizun71/Darkroom@main`: tự đặt base URL khi build ở nơi khác.
 - Chạy local (`npm run dev`, `npm run build`) không có các env trên nên vẫn dùng ảnh local.
+
+### Giữ repo nhẹ
+
+- Mọi file đã commit nằm mãi trong history git. Luôn nén ảnh (`npm run add`) trước khi commit, đừng commit PNG gốc.
+- Trên GitHub: Settings → General → Pull Requests, chỉ bật **Allow squash merging**. PR lỡ đẩy ảnh gốc rồi sửa lại cũng không để file nặng trong history `main`.
+- jsDelivr không phục vụ repo > 150 MB hoặc file > 20 MB. Với ~100 KB/ảnh, git + jsDelivr đủ cho khoảng 1000 ảnh. Khi repo gần 100 MB, chuyển ảnh sang Cloudflare R2 (10 GB miễn phí, không tính băng thông) và ghi `image: https://...` trong `prompt.md`.
+- Không dùng Git LFS: jsDelivr chỉ trả file pointer, không trả ảnh.
 
 ## Cấu trúc
 

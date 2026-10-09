@@ -46,8 +46,8 @@ Everything below the second `---` is the prompt. Paste it exactly as you used it
 
 ## Image rules
 
-- Named `image.jpg`, `image.png`, `image.webp` or `image.avif`, under 1.5 MB. `npm run add -- <image> <name>` resizes it and saves it to `content/<name>/`
-- Long edge between 512 and 2560 px
+- Named `image.jpg`, `image.png`, `image.webp` or `image.avif`, under 400 KB. `npm run add -- <image> <name>` resizes it and saves it to `content/<name>/`
+- Long edge between 512 and 2048 px. Upload the compressed file, not the original: once merged, every byte stays in the git history
 - You generated it yourself
 - No real people's likeness, no explicit content, no logos or trademarked characters
 

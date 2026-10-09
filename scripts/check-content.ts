@@ -6,10 +6,10 @@ import path from "node:path";
 import { IMAGE_EXT, PROMPT_FILE, list, parseAuthor, readContent } from "../plugins/gallery.ts";
 
 const dir = path.resolve(import.meta.dirname, "..", "content");
-const MAX_BYTES = 1.5 * 1024 * 1024;
-const SOFT_BYTES = 500 * 1024;
+const MAX_BYTES = 400 * 1024;
+const SOFT_BYTES = 150 * 1024;
 const MIN_EDGE = 512;
-const MAX_EDGE = 2560;
+const MAX_EDGE = 2048;
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -33,7 +33,7 @@ for (const e of entries) {
   if (e.imageUrl) errors.push(`${where}: upload the image file instead of linking to a URL, so it cannot disappear later.`);
   if (e.imageFile) {
     if (e.bytes !== null && e.bytes > MAX_BYTES) {
-      errors.push(`content/${e.imageFile}: ${(e.bytes / 1024 / 1024).toFixed(1)} MB is too large. Run: npm run add -- content/${e.imageFile} ${e.id}`);
+      errors.push(`content/${e.imageFile}: ${Math.round(e.bytes / 1024)} KB is too large (max ${MAX_BYTES / 1024} KB). Run: npm run add -- content/${e.imageFile} ${e.id}`);
     } else if (e.bytes !== null && e.bytes > SOFT_BYTES) {
       warnings.push(`content/${e.imageFile}: ${Math.round(e.bytes / 1024)} KB. Smaller loads faster: npm run add -- content/${e.imageFile} ${e.id}`);
     }

@@ -47,7 +47,7 @@ body:
     id: image
     attributes:
       label: Image
-      description: Drag and drop the image here. Under 1.5 MB, long edge between 512 and 2560 px.
+      description: Drag and drop the image here. Any size, long edge at least 512 px. A maintainer compresses it.
     validations:
       required: true
   - type: checkboxes

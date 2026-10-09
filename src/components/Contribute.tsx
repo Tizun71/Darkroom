@@ -92,7 +92,7 @@ export default function Contribute() {
           <li><strong className="font-semibold text-fg">Required:</strong> title, model, date (YYYY-MM-DD), tags, and the prompt below the second <code className="text-fg">---</code>.</li>
           <li><strong className="font-semibold text-fg">Optional:</strong> negative prompt, and author for credit: your X profile link, your GitHub profile link, or your GitHub username. Your avatar shows next to the image.</li>
           <li><strong className="font-semibold text-fg">Prompt:</strong> paste it exactly as you used it, flags like <code className="text-fg">--ar 4:5</code> included.</li>
-          <li><strong className="font-semibold text-fg">Image:</strong> .jpg, .png, .webp or .avif, under 1.5 MB, long edge between 512 and 2560 px. <code className="text-fg">npm run add</code> shrinks it and creates the folder for you.</li>
+          <li><strong className="font-semibold text-fg">Image:</strong> .jpg, .png, .webp or .avif, under 400 KB, long edge between 512 and 2048 px. <code className="text-fg">npm run add</code> shrinks it and creates the folder for you.</li>
         </ul>
       </Step>
 

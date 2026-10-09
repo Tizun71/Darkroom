@@ -7,7 +7,8 @@
 //     -> content/harbor-at-dawn/image.avif
 //     -> content/harbor-at-dawn/prompt.md  (fill in the fields and paste the prompt)
 //
-// Defaults: long edge at most 1600 px, AVIF quality 50, metadata removed.
+// Defaults: long edge at most 1440 px, AVIF quality 45, metadata removed.
+// Running it on an image already in content/ recompresses it in place.
 // --webp writes WebP quality 75 instead, for tools that cannot open AVIF.
 // `npm run compress` is the same command.
 import fs from "node:fs";
@@ -15,7 +16,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { IMAGE_EXT, PROMPT_FILE } from "../plugins/gallery.ts";
 
-const MAX_EDGE = 1600;
+const MAX_EDGE = 1440;
 const args = process.argv.slice(2);
 const webp = args.includes("--webp");
 const [input, nameArg] = args.filter((a) => !a.startsWith("--"));
@@ -41,7 +42,7 @@ const before = fs.statSync(input).size;
 const pipeline = sharp(input)
   .rotate() // apply EXIF orientation before metadata is dropped
   .resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside", withoutEnlargement: true });
-const buffer = await (webp ? pipeline.webp({ quality: 75, effort: 6 }) : pipeline.avif({ quality: 50, effort: 6 })).toBuffer();
+const buffer = await (webp ? pipeline.webp({ quality: 75, effort: 6 }) : pipeline.avif({ quality: 45, effort: 9, chromaSubsampling: "4:2:0" })).toBuffer();
 fs.mkdirSync(folder, { recursive: true });
 fs.writeFileSync(output, buffer);
 
