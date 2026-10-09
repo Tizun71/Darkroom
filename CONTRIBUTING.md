@@ -49,7 +49,7 @@ Everything below the second `---` is the prompt. Paste it exactly as you used it
 - Named `image.jpg`, `image.png`, `image.webp` or `image.avif`, under 400 KB. `npm run add -- <image> <name>` resizes it and saves it to `content/<name>/`
 - Long edge between 512 and 2048 px. Upload the compressed file, not the original: once merged, every byte stays in the git history
 - You generated it yourself
-- No real people's likeness, no explicit content, no logos or trademarked characters
+- No real people's likeness, no explicit content, no logos or advertising
 
 ## License
 
@@ -86,9 +86,10 @@ Then open a pull request on GitHub.
 ## What happens next
 
 1. An automatic check runs `npm run check` and `npm run build` on your pull request. If it fails, the log lists what to fix, for example a missing `model:` line or an image that is too large. Push a fix to the same branch and it runs again.
-2. A maintainer reviews the image and prompt.
-3. After the merge, the site rebuilds and your image appears at the top of the gallery.
+2. An AI review (free GitHub Models) checks the image and prompt against the rules below and labels the pull request `ai-approved`, `needs-changes` or `needs-human`, with a comment saying why. Only pull requests that add new folders in `content/` get this review.
+3. A maintainer merges approved pull requests.
+4. After the merge, the site rebuilds and your image appears at the top of the gallery.
 
 ## No GitHub pull request?
 
-Open an issue with the **Submit a prompt** form and attach the image. A maintainer adds it for you.
+Open an issue with the **Submit a prompt** form and attach the image. A bot builds the entry, the AI review checks it, and a pull request opens for you within a few minutes. If something is missing, the bot comments on your issue: edit the issue and it tries again.

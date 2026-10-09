@@ -2,6 +2,7 @@ name: Check content
 
 on:
   pull_request:
+  workflow_dispatch: # started by intake.yml for the pull requests it opens
   push:
     branches: [main]
 

@@ -124,7 +124,7 @@ export default function Contribute() {
       <Step n={3} title="Wait for the check and the review">
         <ul className="grid gap-2 text-base text-fg-dim">
           <li>An automatic check runs on your pull request. If it fails, open the log: it lists exactly what to fix, such as a missing model line or an image that is too large. Push a fix to the same branch and it runs again.</li>
-          <li>A maintainer looks at the image and the prompt, then merges.</li>
+          <li>An AI review checks the image and the prompt against the rules below and comments with the result. A maintainer then merges.</li>
           <li>The site rebuilds and your image appears first in the gallery.</li>
         </ul>
       </Step>
@@ -133,14 +133,14 @@ export default function Contribute() {
         <h2 className="text-lg font-semibold">What we accept</h2>
         <ul className="grid gap-2 text-base text-fg-dim">
           <li>Images you generated yourself, with the real prompt you used.</li>
-          <li>No real people's likeness, no explicit content, no logos or trademarked characters.</li>
+          <li>No real people's likeness, no explicit content, no logos or advertising.</li>
           <li>Several images in one pull request is fine.</li>
         </ul>
       </section>
 
       <p className="text-base text-fg-dim">
         Not comfortable with pull requests? <RepoLink path="/issues/new?template=new-prompt.yml">Open an issue with the prompt form</RepoLink>,
-        attach the image, and a maintainer adds it for you.
+        attach the image, and a bot turns it into a pull request for you within a few minutes.
       </p>
 
       {repo && (
