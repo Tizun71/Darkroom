@@ -13,10 +13,9 @@
 // `npm run compress` is the same command.
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
-import { IMAGE_EXT, PROMPT_FILE } from "../plugins/content.ts";
+import { PROMPT_FILE } from "../plugins/content.ts";
+import { compressTo, slugify } from "./lib/image.ts";
 
-const MAX_EDGE = 1440;
 const args = process.argv.slice(2);
 const webp = args.includes("--webp");
 const [input, nameArg] = args.filter((a) => !a.startsWith("--"));
@@ -30,34 +29,13 @@ if (!fs.existsSync(input)) {
   process.exit(1);
 }
 
-const slug = (nameArg ?? path.basename(input, path.extname(input)))
-  .toLowerCase()
-  .replace(/[^a-z0-9]+/g, "-")
-  .replace(/^-|-$/g, "");
+const slug = slugify(nameArg ?? path.basename(input, path.extname(input)));
 const folder = path.resolve(import.meta.dirname, "..", "content", slug);
-const ext = webp ? ".webp" : ".avif";
-const output = path.join(folder, "image" + ext);
 
-const before = fs.statSync(input).size;
-const pipeline = sharp(input)
-  .rotate() // apply EXIF orientation before metadata is dropped
-  .resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside", withoutEnlargement: true });
-const buffer = await (webp ? pipeline.webp({ quality: 75, effort: 6 }) : pipeline.avif({ quality: 45, effort: 9, chromaSubsampling: "4:2:0" })).toBuffer();
-fs.mkdirSync(folder, { recursive: true });
-fs.writeFileSync(output, buffer);
-
-// Remove other images in the folder, so each prompt has exactly one image
-for (const other of IMAGE_EXT) {
-  const candidate = path.join(folder, "image" + other);
-  if (other !== ext && fs.existsSync(candidate) && path.resolve(candidate) !== path.resolve(input)) {
-    fs.unlinkSync(candidate);
-    console.log(`Removed content/${slug}/image${other}`);
-  }
-}
-
-const { width, height } = await sharp(buffer).metadata();
+const result = await compressTo(input, folder, webp);
+result.removed.forEach((f) => console.log(`Removed content/${slug}/${f}`));
 const kb = (n: number) => `${Math.round(n / 1024)} KB`;
-console.log(`Saved content/${slug}/image${ext}: ${width}x${height}, ${kb(before)} -> ${kb(buffer.length)}`);
+console.log(`Saved content/${slug}/${result.file}: ${result.width}x${result.height}, ${kb(result.before)} -> ${kb(result.after)}`);
 
 const promptPath = path.join(folder, PROMPT_FILE);
 if (!fs.existsSync(promptPath)) {

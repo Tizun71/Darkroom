@@ -1,0 +1,32 @@
+name: AI moderation (manual)
+
+# Re-runs the AI moderation on entries already in the repository. Read-only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      slugs:
+        description: Folder names in content/, separated by spaces
+        required: true
+
+permissions: {}
+
+jobs:
+  moderate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      models: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: AI moderation
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLUGS: ${{ inputs.slugs }}
+          MODERATION_OUT: ${{ runner.temp }}/moderation.json
+        run: node scripts/moderate.ts $SLUGS

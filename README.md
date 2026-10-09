@@ -37,11 +37,24 @@ npm run check     # validate content/ (CI runs this on every PR)
 flowchart LR
   A["Add content/&lt;name&gt;/<br/>image + prompt.md"] --> B["Open a pull request"]
   B --> C["CI: npm run check<br/>+ npm run build"]
-  C --> D["Maintainer review"]
-  D --> E["Merge: live on the site"]
+  C --> D["AI review<br/>(GitHub Models)"]
+  D --> E["Maintainer merges:<br/>live on the site"]
 ```
 
 See `/contribute.html` or `CONTRIBUTING.md` for the full guide. People who do not use pull requests can use the "Submit a prompt" issue form.
+
+### Automation
+
+Everything runs on free GitHub features. The only manual step is clicking **Merge**.
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `intake.yml` | Issue with the `new prompt` label opened or edited | Builds `content/<slug>/` from the form (`scripts/intake-issue.ts`), runs `npm run check`, AI moderation, then opens a pull request labelled `ai-approved` and starts `check` on it. On a problem it comments on the issue; editing the issue retries. |
+| `review.yml` | Pull request from an outside contributor | Pull requests that only add new `content/` folders get `npm run check` + AI moderation, labelled `ai-approved` or `needs-changes`. Anything else gets `needs-human`. Runs from the base branch and never executes code from the pull request. |
+| `check.yml` | Every pull request, push to `main`, and dispatch from `intake.yml` | `npm run check` + `npm run build`. Required to merge. |
+| `moderate.yml` | Manual | Re-runs AI moderation on any entries, for testing. |
+
+AI moderation (`scripts/moderate.ts`) uses [GitHub Models](https://docs.github.com/en/github-models) with the workflow's `GITHUB_TOKEN`, so it needs no API key and costs nothing. The free tier is rate limited; when it is unavailable the item gets the `ai-retry` label. Change the model with the `MODERATION_MODEL` variable.
 
 Links to the repository (upload, fork, issue) come from `REPO_URL` in `src/config.ts`. Change it if you fork to another repository.
 

@@ -1,0 +1,107 @@
+name: AI review
+
+# Pre-reviews pull requests from contributors. A PR that only adds new entries in
+# content/ is validated and moderated by the free GitHub Models AI, then labelled
+# `ai-approved` or `needs-changes`. Anything else is labelled `needs-human`.
+# Nothing is merged here: a maintainer clicks Merge.
+#
+# Safety: pull_request_target runs this workflow from the base branch with a write
+# token. Code from the pull request is never run. Only the files of approved-scope
+# entries (content/<slug>/prompt.md and image.*) are copied in, as data.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: >-
+      !github.event.pull_request.draft &&
+      github.event.pull_request.user.type != 'Bot' &&
+      !contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      models: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      MODERATION_OUT: ${{ runner.temp }}/moderation.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Decide the scope
+        id: scope
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --slurp > "$RUNNER_TEMP/files.json"
+          node scripts/pr-scope.ts "$RUNNER_TEMP/files.json"
+
+      - name: Needs a human
+        if: steps.scope.outputs.scope == 'human'
+        env:
+          REASON: ${{ steps.scope.outputs.reason }}
+        run: |
+          gh pr edit "$PR" --remove-label ai-approved --remove-label needs-changes --add-label needs-human
+          gh pr comment "$PR" --body "Thanks! This pull request needs a maintainer: $REASON
+
+          Only pull requests that add new folders in \`content/\` get the automatic review."
+
+      - name: Copy the new entries from the pull request
+        if: steps.scope.outputs.scope == 'auto'
+        env:
+          SLUGS: ${{ steps.scope.outputs.slugs }}
+        run: |
+          git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "refs/pull/$PR/head"
+          test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
+          for slug in $SLUGS; do git checkout FETCH_HEAD -- "content/$slug"; done
+
+      - name: Validate
+        id: check
+        if: steps.scope.outputs.scope == 'auto'
+        run: npm run check
+
+      - name: AI moderation
+        id: moderate
+        if: steps.scope.outputs.scope == 'auto'
+        run: node scripts/moderate.ts ${{ steps.scope.outputs.slugs }}
+
+      - name: Approved
+        if: steps.scope.outputs.scope == 'auto'
+        run: |
+          gh pr edit "$PR" --remove-label needs-changes --remove-label ai-retry --remove-label needs-human --add-label ai-approved
+          gh pr comment "$PR" --body "AI check passed for $(jq -r '[.verdicts[] | "`" + .slug + "`"] | join(", ")' "$MODERATION_OUT"): $(jq -r '[.verdicts[].reason] | join(" ")' "$MODERATION_OUT")
+
+          A maintainer merges it once \`check\` passes."
+
+      - name: Tell the contributor what to fix
+        if: failure() && steps.scope.outputs.scope == 'auto'
+        run: |
+          if [ "${{ steps.check.outcome }}" = "failure" ]; then
+            label=needs-changes
+            msg="The content check failed. The run log lists what to fix: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          elif [ -f "$MODERATION_OUT" ] && [ -z "$(jq -r '.error // empty' "$MODERATION_OUT")" ]; then
+            label=needs-changes
+            msg="The AI check did not approve this: $(jq -r '[.verdicts[] | select(.approve == false) | "`" + .slug + "`: " + .reason] | join(" ")' "$MODERATION_OUT")"
+          else
+            label=ai-retry
+            msg="The AI check is unavailable right now. Push any commit later to try again, or wait for a maintainer."
+          fi
+          gh pr edit "$PR" --remove-label ai-approved --add-label "$label" || true
+          gh pr comment "$PR" --body "$msg"

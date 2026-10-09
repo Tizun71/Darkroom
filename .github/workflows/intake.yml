@@ -1,0 +1,111 @@
+name: Intake submitted prompt
+
+# Turns a "Submit a prompt" issue into a ready-to-merge pull request:
+# build the entry, validate it, ask the free GitHub Models AI to moderate it,
+# then open a PR labelled `ai-approved`. A maintainer only clicks Merge.
+# The required `check` runs through workflow_dispatch, because events from
+# GITHUB_TOKEN do not start pull_request workflows.
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+permissions: {}
+
+concurrency:
+  group: intake-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  intake:
+    if: >-
+      github.event.issue.state == 'open' &&
+      contains(github.event.issue.labels.*.name, 'new prompt') &&
+      github.event.issue.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+      models: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+      LOGIN: ${{ github.event.issue.user.login }}
+      USER_ID: ${{ github.event.issue.user.id }}
+      INTAKE_OUT: ${{ runner.temp }}/intake.json
+      MODERATION_OUT: ${{ runner.temp }}/moderation.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Build the entry from the issue
+        id: intake
+        run: node scripts/intake-issue.ts
+
+      - name: Validate
+        id: check
+        run: npm run check
+
+      - name: AI moderation
+        id: moderate
+        run: node scripts/moderate.ts "${{ steps.intake.outputs.slug }}"
+
+      - name: Open a pull request
+        env:
+          SLUG: ${{ steps.intake.outputs.slug }}
+        run: |
+          branch="intake/issue-$ISSUE"
+          title=$(jq -r .title "$INTAKE_OUT")
+          reason=$(jq -r '.verdicts[0].reason' "$MODERATION_OUT")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add "content/$SLUG"
+          git commit -m "Add $SLUG (#$ISSUE)" -m "Submitted in #$ISSUE." -m "Co-authored-by: $LOGIN <$USER_ID+$LOGIN@users.noreply.github.com>"
+          git push --force origin "$branch"
+
+          body="Closes #$ISSUE. Built from the issue form.
+
+          AI check: $reason
+
+          Merge when \`check\` passes."
+          url=$(gh pr view "$branch" --json url -q .url 2>/dev/null || true)
+          if [ -z "$url" ]; then
+            url=$(gh pr create --head "$branch" --title "Add $title" --body "$body" --label ai-approved)
+          fi
+          gh workflow run check.yml --ref "$branch"
+
+          gh issue edit "$ISSUE" --remove-label needs-changes --remove-label ai-retry --add-label ai-approved || true
+          gh issue comment "$ISSUE" --body "Thanks! Your image passed the automatic checks: $url
+
+          It appears in the gallery a few minutes after a maintainer merges the pull request. This issue closes by itself."
+
+      - name: Tell the submitter what to fix
+        if: failure()
+        run: |
+          if [ "${{ steps.intake.outcome }}" = "failure" ]; then
+            label=needs-changes
+            msg="I could not add this yet: $(jq -r .reason "$INTAKE_OUT" 2>/dev/null || echo 'the form could not be read.')"
+          elif [ "${{ steps.check.outcome }}" = "failure" ]; then
+            label=needs-changes
+            msg="The automatic check failed. The run log lists what to fix: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          elif [ "${{ steps.moderate.outcome }}" = "failure" ] && [ -f "$MODERATION_OUT" ] && [ -z "$(jq -r '.error // empty' "$MODERATION_OUT")" ]; then
+            label=needs-changes
+            msg="The AI check did not approve this image: $(jq -r '[.verdicts[] | select(.approve == false) | .reason] | join(" ")' "$MODERATION_OUT")"
+          elif [ "${{ steps.moderate.outcome }}" = "failure" ]; then
+            label=ai-retry
+            msg="The AI check is unavailable right now. Edit this issue later (any small change) to try again."
+          else
+            exit 0
+          fi
+          gh issue edit "$ISSUE" --remove-label ai-approved --add-label "$label" || true
+          gh issue comment "$ISSUE" --body "$msg
+
+          Edit this issue to fix it and the checks run again."
