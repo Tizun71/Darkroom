@@ -80,6 +80,13 @@ export default function Contribute() {
           Anyone with a free GitHub account can add an image. You send a pull request with one folder holding two files, an automatic check validates them,
           and after a maintainer merges it your image shows up at the top of the gallery.
         </p>
+        {repo && (
+          <p className="rounded-xl border border-surface-3 bg-surface p-4 text-base text-fg-dim">
+            <strong className="font-semibold text-fg">Never used git?</strong> Fill in the{" "}
+            <RepoLink path="/issues/new?template=new-prompt.yml">prompt form</RepoLink> and attach your image. A bot turns it into a pull request
+            for you. The steps below are for people who prefer pull requests.
+          </p>
+        )}
       </header>
 
       <Step n={1} title="Prepare one folder with two files">
@@ -137,11 +144,6 @@ export default function Contribute() {
           <li>Several images in one pull request is fine.</li>
         </ul>
       </section>
-
-      <p className="text-base text-fg-dim">
-        Not comfortable with pull requests? <RepoLink path="/issues/new?template=new-prompt.yml">Open an issue with the prompt form</RepoLink>,
-        attach the image, and a bot turns it into a pull request for you within a few minutes.
-      </p>
 
       {repo && (
         <a

@@ -53,7 +53,7 @@ export default function App() {
         Skip to the gallery
       </a>
 
-      <SiteHeader />
+      <SiteHeader total={works.length} />
 
       {works.length > 0 && (
         <FilterBar
@@ -68,7 +68,7 @@ export default function App() {
       )}
 
       <main id="gallery" tabIndex={-1} className="mx-auto max-w-[1600px] px-3 pb-12 outline-none sm:px-6">
-        {visible.length > 0 ? <Wall works={visible} onOpen={setOpenId} /> : <EmptyState onClear={works.length ? clear : undefined} />}
+        {visible.length > 0 ? <Wall works={visible} onOpen={setOpenId} invite={!filtered} /> : <EmptyState onClear={works.length ? clear : undefined} />}
       </main>
 
       <SiteFooter />

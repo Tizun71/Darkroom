@@ -156,12 +156,12 @@ export default function Lightbox({ work, layoutId, position, hasPrev, hasNext, o
               </div>
 
               <section aria-label="Prompt" className="grid gap-3 rounded-xl border border-surface-3 bg-surface-2 p-3">
-                <div className="flex items-center justify-between gap-3">
+                <div className="sticky -top-2 z-10 sm:-top-6 -mx-3 -mt-3 flex items-center justify-between gap-3 rounded-t-xl bg-surface-2 p-3 pb-2">
                   <h3 className="text-sm font-semibold text-fg-dim">Prompt</h3>
                   <CopyButton value={work.prompt} label="Copy" errorLabel="Failed" size="sm" variant="solid" />
                 </div>
                 <ExpandableText resetKey={work.id}>
-                  <p className="text-base text-fg select-text">
+                  <p className="whitespace-pre-line text-base text-fg select-text">
                     <PromptText text={work.prompt} />
                   </p>
                 </ExpandableText>
@@ -174,7 +174,7 @@ export default function Lightbox({ work, layoutId, position, hasPrev, hasNext, o
                     <CopyButton value={work.negative} label="Copy" errorLabel="Failed" size="sm" />
                   </div>
                   <ExpandableText resetKey={work.id} collapsedHeight={120}>
-                    <p className="text-base text-fg select-text">{work.negative}</p>
+                    <p className="whitespace-pre-line text-base text-fg select-text">{work.negative}</p>
                   </ExpandableText>
                 </section>
               )}
