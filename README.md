@@ -1,43 +1,70 @@
+<p align="center">
+  <a href="https://darkroom-black-xi.vercel.app"><img src="docs/banner.jpg" alt="Darkroom: AI images with the exact prompt that made them" width="100%" /></a>
+</p>
+
+<p align="center">
+  <a href="https://darkroom-black-xi.vercel.app"><b>Open the gallery</b></a> ·
+  <a href="CONTRIBUTING.md"><b>Add your prompt</b></a> ·
+  <a href="https://github.com/Tizun71/Darkroom/issues/new/choose">Submit without git</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Tizun71/Darkroom/actions/workflows/check.yml"><img alt="Check" src="https://github.com/Tizun71/Darkroom/actions/workflows/check.yml/badge.svg" /></a>
+  <a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-f4f1e6?labelColor=131209" /></a>
+  <a href="content/LICENSE"><img alt="Content: CC BY 4.0" src="https://img.shields.io/badge/content-CC%20BY%204.0-f4f1e6?labelColor=131209" /></a>
+  <a href="https://github.com/Tizun71/Darkroom/pulls"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-f4f1e6?labelColor=131209" /></a>
+</p>
+
 # Darkroom
 
-Gallery tĩnh hiển thị ảnh AI kèm prompt đã tạo ra ảnh đó. Dùng Vite + React + Tailwind, không có backend.
+A static gallery of AI images, each shown with the prompt that made it. Open an image, press Copy, paste the prompt into Midjourney, FLUX, GPT Image or any other tool.
 
-## Chạy
+Built with Vite, React and Tailwind. No backend, no accounts, no tracking.
+
+## Run
 
 ```bash
 npm install
 npm run dev       # http://localhost:5173
-npm run build     # xuất ra dist/, deploy lên bất kỳ static host nào
-npm run preview   # xem thử bản build
-npm run check     # kiểm tra content/ (CI chạy lệnh này trên mọi PR)
+npm run build     # outputs dist/, deploy to any static host
+npm run preview   # preview the build
+npm run check     # validate content/ (CI runs this on every PR)
 ```
 
-## Người khác đóng góp thế nào
+## How others contribute
 
-Xem trang `/contribute.html` hoặc `CONTRIBUTING.md`. Tóm tắt: người đóng góp gửi pull request thêm 1 thư mục `content/<tên>/` (ảnh + `prompt.md`), GitHub Action (`.github/workflows/check.yml`) chạy `npm run check` và `npm run build`, bạn review rồi merge. Ai không quen PR thì dùng issue form "Submit a prompt".
+```mermaid
+flowchart LR
+  A["Add content/&lt;name&gt;/<br/>image + prompt.md"] --> B["Open a pull request"]
+  B --> C["CI: npm run check<br/>+ npm run build"]
+  C --> D["Maintainer review"]
+  D --> E["Merge: live on the site"]
+```
 
-Link tới repo (upload, fork, issue) lấy từ `REPO_URL` trong `src/config.ts`. Fork sang repo khác thì sửa giá trị này.
+See `/contribute.html` or `CONTRIBUTING.md` for the full guide. People who do not use pull requests can use the "Submit a prompt" issue form.
 
-## Thêm ảnh mới
+Links to the repository (upload, fork, issue) come from `REPO_URL` in `src/config.ts`. Change it if you fork to another repository.
 
-Mỗi tác phẩm là **một thư mục** trong `content/`:
+## Add an image
+
+Each work is **one folder** in `content/`:
 
 ```
 content/
   harbor-dawn/
-    image.avif    ← ảnh (image.jpg .jpeg .png .webp .avif .gif)
+    image.avif    ← image (image.jpg .jpeg .png .webp .avif .gif)
     prompt.md     ← prompt
 ```
 
-Cách nhanh nhất:
+The fastest way:
 
 ```bash
 npm run add -- ~/Downloads/poster.png harbor-dawn
 ```
 
-Lệnh này nén ảnh thành `content/harbor-dawn/image.avif` và tạo `prompt.md` mẫu. Sửa các trường, dán prompt, chạy `npm run check`.
+This compresses the image to `content/harbor-dawn/image.avif` and creates a template `prompt.md`. Fill in the fields, paste the prompt, and run `npm run check`.
 
-Nội dung `prompt.md`:
+`prompt.md` looks like this:
 
 ```md
 ---
@@ -50,58 +77,59 @@ negative: text, watermark
 Fishing boats in a quiet harbor at dawn, mist on the water, ...
 ```
 
-- Phần dưới dấu `---` là prompt. Nút copy sẽ copy đúng phần này.
-- `title`, `model`, `date`, `tags` bắt buộc (`npm run check` báo lỗi nếu thiếu). `negative`, `author` không bắt buộc. Tác phẩm có `date` mới nhất hiện đầu trang.
-- Ảnh phải là file trong thư mục của tác phẩm. `npm run check` từ chối `image: https://...` để ảnh không mất về sau.
-- Giới hạn: ảnh ≤ 400 KB, cạnh dài 512–2048 px (`npm run check` chặn). `npm run add` ra AVIF 1440px q45, thường 70–120 KB.
-- Ảnh quá lớn: `npm run add -- <ảnh> <tên>` thu nhỏ và lưu thành `content/<tên>/image.avif` (`npm run compress` là alias).
-- Tên thư mục (`harbor-dawn`) được dùng làm link chia sẻ: `/#/harbor-dawn`.
-- `author:` nhận link X (`https://x.com/ten`), link GitHub hoặc username GitHub. Link X lấy avatar từ `https://unavatar.io/x/ten`, GitHub lấy từ `https://unavatar.io/github/ten`.
+- Everything below the second `---` is the prompt. The copy button copies exactly this text.
+- `title`, `model`, `date` and `tags` are required (`npm run check` fails without them). `negative` and `author` are optional. The work with the newest `date` shows first.
+- The image must be a file in the work's folder. `npm run check` rejects `image: https://...` so images cannot disappear later.
+- Limits: image ≤ 400 KB, long edge 512–2048 px (`npm run check` enforces them). `npm run add` outputs AVIF at 1440 px, quality 45, usually 70–120 KB.
+- Image too large: `npm run add -- <image> <name>` shrinks it and saves it as `content/<name>/image.avif` (`npm run compress` is an alias).
+- The folder name (`harbor-dawn`) is the share link: `/#/harbor-dawn`.
+- `author:` takes an X profile link (`https://x.com/name`), a GitHub profile link or a GitHub username. X avatars come from `https://unavatar.io/x/name`, GitHub avatars from `https://unavatar.io/github/name`.
 
-Khi đang chạy `npm run dev`, trang tự tải lại mỗi khi bạn thêm, sửa hoặc xoá file trong `content/`. Nếu một thư mục thiếu `prompt.md` hoặc ảnh, terminal sẽ báo lỗi và tác phẩm đó bị bỏ qua.
+While `npm run dev` runs, the page reloads whenever you add, edit or delete a file in `content/`. If a folder has no `prompt.md` or no image, the terminal shows an error and that work is skipped.
 
-## Ảnh qua CDN (jsDelivr)
+## Images through a CDN (jsDelivr)
 
-Khi Vercel build từ một commit GitHub, ảnh **không** được đóng gói vào `dist/`. Site trỏ thẳng tới jsDelivr, ghim theo commit đang deploy:
+When Vercel builds from a GitHub commit, images are **not** bundled into `dist/`. The site points straight at jsDelivr, pinned to the deployed commit:
 
 ```
-https://cdn.jsdelivr.net/gh/<owner>/<repo>@<commit-sha>/content/<tên>/image.avif
+https://cdn.jsdelivr.net/gh/<owner>/<repo>@<commit-sha>/content/<name>/image.avif
 ```
 
-- Bật tự động nhờ system env của Vercel (`VERCEL_GIT_REPO_OWNER`, `VERCEL_GIT_REPO_SLUG`, `VERCEL_GIT_COMMIT_SHA`). Cần bật "Automatically expose System Environment Variables" (mặc định bật) và repo phải public.
-- Ghim theo SHA nên URL không bao giờ cũ, jsDelivr cache vĩnh viễn. Kích thước ảnh vẫn đọc lúc build nên lưới không nhảy.
-- `IMAGE_CDN=off`: tắt, đóng gói ảnh như bình thường (dùng khi `vercel deploy` từ máy với commit chưa push).
-- `IMAGE_CDN_BASE=https://cdn.jsdelivr.net/gh/Tizun71/Darkroom@main`: tự đặt base URL khi build ở nơi khác.
-- Chạy local (`npm run dev`, `npm run build`) không có các env trên nên vẫn dùng ảnh local.
+- Turns on automatically through Vercel system env vars (`VERCEL_GIT_REPO_OWNER`, `VERCEL_GIT_REPO_SLUG`, `VERCEL_GIT_COMMIT_SHA`). "Automatically expose System Environment Variables" must be on (default) and the repository must be public.
+- Pinned by SHA, so URLs never go stale and jsDelivr caches them forever. Image sizes are still read at build time, so the grid does not jump.
+- `IMAGE_CDN=off`: turn it off and bundle images as usual (for `vercel deploy` from a machine with unpushed commits).
+- `IMAGE_CDN_BASE=https://cdn.jsdelivr.net/gh/Tizun71/Darkroom@main`: set the base URL by hand when building elsewhere.
+- Local runs (`npm run dev`, `npm run build`) have none of these env vars, so they use local images.
 
-### Giữ repo nhẹ
+### Keep the repository small
 
-- Mọi file đã commit nằm mãi trong history git. Luôn nén ảnh (`npm run add`) trước khi commit, đừng commit PNG gốc.
-- Trên GitHub: Settings → General → Pull Requests, chỉ bật **Allow squash merging**. PR lỡ đẩy ảnh gốc rồi sửa lại cũng không để file nặng trong history `main`.
-- jsDelivr không phục vụ repo > 150 MB hoặc file > 20 MB. Với ~100 KB/ảnh, git + jsDelivr đủ cho khoảng 1000 ảnh. Khi repo gần 100 MB, chuyển ảnh sang Cloudflare R2 (10 GB miễn phí, không tính băng thông) và ghi `image: https://...` trong `prompt.md`.
-- Không dùng Git LFS: jsDelivr chỉ trả file pointer, không trả ảnh.
+- Every committed file stays in git history forever. Always compress images (`npm run add`) before committing. Never commit the original PNG.
+- On GitHub: Settings → General → Pull Requests, enable only **Allow squash merging**. A PR that pushed an original image and then fixed it leaves no heavy file in `main` history.
+- jsDelivr does not serve repositories over 150 MB or files over 20 MB. At ~100 KB per image, git + jsDelivr is enough for about 1000 images. When the repository nears 100 MB, move images to Cloudflare R2 (10 GB free, no bandwidth fees) and set `image: https://...` in `prompt.md`.
+- Do not use Git LFS: jsDelivr serves only the pointer file, not the image.
 
-## Cấu trúc
+## Structure
 
-Trang chỉ có một việc: xem ảnh, bấm Copy. Header một dòng, thanh tìm kiếm + tag dính trên cùng, lưới ảnh, bấm ảnh để xem prompt đầy đủ và copy.
+The site does one thing: look at images, press Copy. A one-line header, a sticky search bar with tags, the image grid. Click an image to see the full prompt and copy it.
 
-| Đường dẫn | Vai trò |
+| Path | Role |
 |---|---|
-| `content/` | Mỗi tác phẩm một thư mục: `image.*` + `prompt.md`. Thường chỉ cần sửa ở đây. |
-| `plugins/content.ts` | Đọc `content/`: parse frontmatter, `author:`, kích thước ảnh. Dùng chung cho plugin và scripts. |
-| `plugins/gallery.ts` | Plugin Vite tạo module `virtual:gallery`, chọn ảnh local hay CDN. |
-| `scripts/add-entry.ts` | `npm run add`: nén ảnh, tạo thư mục và `prompt.md` mẫu. |
-| `scripts/check-content.ts` | `npm run check`: kiểm tra tên thư mục, trường bắt buộc, kích thước ảnh. |
-| `src/main.tsx`, `src/App.tsx` | Trang gallery: ghép header, thanh lọc, lưới ảnh, lightbox. |
-| `src/page.tsx` | Entry cho các trang tĩnh. Mỗi file HTML chọn trang bằng `<body data-page="...">`. |
+| `content/` | One folder per work: `image.*` + `prompt.md`. Usually the only place to edit. |
+| `plugins/content.ts` | Reads `content/`: parses frontmatter, `author:` and image size. Shared by the plugin and the scripts. |
+| `plugins/gallery.ts` | Vite plugin that builds the `virtual:gallery` module and picks local or CDN images. |
+| `scripts/add-entry.ts` | `npm run add`: compresses the image, creates the folder and a template `prompt.md`. |
+| `scripts/check-content.ts` | `npm run check`: validates folder names, required fields and image size. |
+| `src/main.tsx`, `src/App.tsx` | Gallery page: header, filter bar, grid, lightbox. |
+| `src/page.tsx` | Entry for the static pages. Each HTML file picks its page with `<body data-page="...">`. |
 | `src/pages/` | `Contribute`, `Legal` (Privacy, Terms), `NotFound`. |
-| `src/hooks/` | `useGalleryFilter` (tìm kiếm, lọc tag), `useShareLink` (link chia sẻ `#/<id>`). |
-| `src/components/` | `Wall` (lưới masonry), `Lightbox` (chi tiết, nút Copy), `FilterBar`, `SiteHeader`, `SiteFooter`, `EmptyState`, `CopyButton`, `Author`... |
-| `src/config.ts` | `REPO_URL`: link GitHub ở header và trang contribute. |
-| `src/index.css` | Màu và font (Tailwind v4 `@theme`). |
-| `.github/` | CI, Dependabot, PR template, issue form. |
+| `src/hooks/` | `useGalleryFilter` (search, tag filter), `useShareLink` (share link `#/<id>`). |
+| `src/components/` | `Wall` (masonry grid), `Lightbox` (details, Copy button), `FilterBar`, `SiteHeader`, `SiteFooter`, `EmptyState`, `CopyButton`, `Author`... |
+| `src/config.ts` | `REPO_URL`: GitHub link in the header and on the contribute page. |
+| `src/index.css` | Colors and fonts (Tailwind v4 `@theme`). |
+| `docs/` | Images for this README. |
+| `.github/` | CI, PR template, issue form. |
 
 ## License
 
 - Code: [MIT](LICENSE).
-- Ảnh và prompt trong `content/`: [CC BY 4.0](content/LICENSE). Bản quyền thuộc người đóng góp ghi trong `author:`. Dùng lại phải ghi nguồn.
+- Images and prompts in `content/`: [CC BY 4.0](content/LICENSE). Copyright belongs to the contributor named in `author:`. Credit them when you reuse a work.
