@@ -1,7 +1,7 @@
 name: AI review
 
 # Pre-reviews pull requests from contributors. A PR that only adds new entries in
-# content/ is validated and moderated by the free GitHub Models AI, then labelled
+# content/ is validated and moderated by the free Gemini API (GEMINI_API_KEY secret), then labelled
 # `ai-approved` or `needs-changes`. Anything else is labelled `needs-human`.
 # Nothing is merged here: a maintainer clicks Merge.
 #
@@ -30,10 +30,10 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-      models: read
     env:
       GH_TOKEN: ${{ github.token }}
-      GITHUB_TOKEN: ${{ github.token }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      MODERATION_MODEL: ${{ vars.MODERATION_MODEL }}
       PR: ${{ github.event.pull_request.number }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       MODERATION_OUT: ${{ runner.temp }}/moderation.json
@@ -85,6 +85,11 @@ jobs:
       - name: Approved
         if: steps.scope.outputs.scope == 'auto'
         run: |
+          if [ "$(jq -r .skipped "$MODERATION_OUT")" = "true" ]; then
+            gh pr edit "$PR" --remove-label needs-changes --remove-label ai-retry --add-label needs-human
+            gh pr comment "$PR" --body "The content check passed. AI moderation is not configured, so a maintainer reviews the image."
+            exit 0
+          fi
           gh pr edit "$PR" --remove-label needs-changes --remove-label ai-retry --remove-label needs-human --add-label ai-approved
           gh pr comment "$PR" --body "AI check passed for $(jq -r '[.verdicts[] | "`" + .slug + "`"] | join(", ")' "$MODERATION_OUT"): $(jq -r '[.verdicts[].reason] | join(" ")' "$MODERATION_OUT")
 

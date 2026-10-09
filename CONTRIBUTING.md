@@ -86,7 +86,7 @@ Then open a pull request on GitHub.
 ## What happens next
 
 1. An automatic check runs `npm run check` and `npm run build` on your pull request. If it fails, the log lists what to fix, for example a missing `model:` line or an image that is too large. Push a fix to the same branch and it runs again.
-2. An AI review (free GitHub Models) checks the image and prompt against the rules below and labels the pull request `ai-approved`, `needs-changes` or `needs-human`, with a comment saying why. Only pull requests that add new folders in `content/` get this review.
+2. An AI review (Gemini free tier) checks the image and prompt against the rules below and labels the pull request `ai-approved`, `needs-changes` or `needs-human`, with a comment saying why. Only pull requests that add new folders in `content/` get this review.
 3. A maintainer merges approved pull requests.
 4. After the merge, the site rebuilds and your image appears at the top of the gallery.
 
